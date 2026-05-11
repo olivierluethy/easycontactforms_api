@@ -1,0 +1,11 @@
+# Route every request through index.php so the front controller can dispatch.
+RewriteEngine On
+
+# Pass the Authorization header through to PHP (some Apache builds strip it).
+RewriteCond %{HTTP:Authorization} ^(.+)$
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%1]
+
+# Skip the rewrite for real files/directories (lets /database.sql still be served if needed).
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php [QSA,L]
