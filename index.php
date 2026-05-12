@@ -24,6 +24,7 @@ $routes = [
     'auth/me'          => 'api/auth/me.php',
     'projects'         => 'api/projects/list.php',
     'projects/delete'  => 'api/projects/delete.php',
+    'projects/rename'  => 'api/projects/rename.php',
     'submissions'      => 'api/submissions/list.php',
     'form/submit'      => 'api/form/submit.php',
     'form/config'      => 'api/form/config.php',
