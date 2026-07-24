@@ -4,6 +4,11 @@ Dependency-free PHP 8 backend over MySQL/MariaDB. Every request goes through
 `index.php`, which strips the deployment subpath and dispatches to a script
 under `api/`.
 
+- **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** — deploying to production and
+  running the migration, step by step.
+- **[docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)** — every error hit so
+  far, what caused it and how it was fixed. Start here when something breaks.
+
 ## Setup
 
 1. Create the database and import `database.sql` (fresh installs only — see
