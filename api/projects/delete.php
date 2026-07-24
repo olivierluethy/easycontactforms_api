@@ -1,22 +1,18 @@
 <?php
-// POST /projects/delete — delete a project owned by the authenticated user.
-// Cascades to submissions via the FK constraint.
+// POST /projects/delete — delete a project the authenticated user owns.
+// Body: { id }
+//
+// Forms, submissions and submission values all cascade away via foreign keys.
 
 require_method('POST');
 
-$user = current_user();
-$body = json_body();
-$id   = (int)($body['id'] ?? 0);
+$user    = current_user();
+$body    = json_body();
+$project = require_project($user, $body['id'] ?? null);
 
-if ($id <= 0) {
-    json_error('A valid project id is required.');
-}
+// Ownership was already proven above; user_id stays in the WHERE clause as a
+// second line of defence in case this query is ever copied elsewhere.
+db()->prepare('DELETE FROM projects WHERE id = ? AND user_id = ?')
+    ->execute([$project['id'], $user['id']]);
 
-$stmt = db()->prepare('DELETE FROM projects WHERE id = ? AND user_id = ?');
-$stmt->execute([$id, $user['id']]);
-
-if ($stmt->rowCount() === 0) {
-    json_error('Project not found.', 404);
-}
-
-json_ok(['deleted' => $id]);
+json_ok(['deleted' => $project['public_id']]);

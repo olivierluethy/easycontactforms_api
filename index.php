@@ -19,15 +19,30 @@ $path = preg_replace('#^(backend/)?(api/)?#', '', $path) ?? $path;
 $path = trim($path, '/');
 
 $routes = [
-    'auth/register'    => 'api/auth/register.php',
-    'auth/login'       => 'api/auth/login.php',
-    'auth/me'          => 'api/auth/me.php',
-    'projects'         => 'api/projects/list.php',
-    'projects/delete'  => 'api/projects/delete.php',
-    'projects/rename'  => 'api/projects/rename.php',
-    'submissions'      => 'api/submissions/list.php',
-    'form/submit'      => 'api/form/submit.php',
-    'form/config'      => 'api/form/config.php',
+    'auth/register'        => 'api/auth/register.php',
+    'auth/login'           => 'api/auth/login.php',
+    'auth/me'              => 'api/auth/me.php',
+
+    'projects'             => 'api/projects/list.php',
+    'projects/get'         => 'api/projects/get.php',
+    'projects/update'      => 'api/projects/update.php',
+    'projects/delete'      => 'api/projects/delete.php',
+    'projects/mark-read'   => 'api/projects/mark_read.php',
+    'projects/favicon'     => 'api/projects/favicon.php',
+    // Superseded by projects/update; kept so older dashboard builds keep working.
+    'projects/rename'      => 'api/projects/rename.php',
+
+    'forms'                => 'api/forms/list.php',
+    'forms/update'         => 'api/forms/update.php',
+    'forms/delete'         => 'api/forms/delete.php',
+
+    'submissions'          => 'api/submissions/list.php',
+    'submissions/get'      => 'api/submissions/get.php',
+    'submissions/mark-read' => 'api/submissions/mark_read.php',
+
+    // Public routes — called by widgets on third-party sites, no auth.
+    'form/submit'          => 'api/form/submit.php',
+    'form/config'          => 'api/form/config.php',
 ];
 
 if (!isset($routes[$path])) {

@@ -1,0 +1,13 @@
+<?php
+// Copy this file to database.local.php and fill in your local credentials.
+// database.local.php is gitignored — real credentials never get committed.
+//
+// Any key you omit falls back to the default in database.php.
+
+return [
+    'host'     => '127.0.0.1',
+    'port'     => 3306,
+    'database' => 'easycontact',
+    'username' => 'ecf',
+    'password' => 'ecf_local_dev',
+];

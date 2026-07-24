@@ -1,9 +1,14 @@
 <?php
 // Bootstrap: shared helpers for every API endpoint.
 // Provides the PDO singleton, JSON response helpers, CORS headers, request parsing,
-// and current_user() which validates the bearer token on protected routes.
+// current_user() which validates the bearer token on protected routes, and the
+// require_*() resource lookups that enforce ownership.
 
 declare(strict_types=1);
+
+// uuid4() / gen_token() / is_uuid(). Kept in their own file so the CLI
+// migration runner can use them without pulling in the header sending below.
+require_once __DIR__ . '/ids.php';
 
 // Permissive CORS — the /form/submit endpoint is invoked by browsers on arbitrary
 // third-party landing pages, so the API stays open. Tighten in production if desired.
@@ -75,11 +80,6 @@ function require_method(string $method): void
     }
 }
 
-function gen_token(int $bytes = 24): string
-{
-    return bin2hex(random_bytes($bytes));
-}
-
 function bearer_token(): ?string
 {
     $auth = $_SERVER['HTTP_AUTHORIZATION']
@@ -112,6 +112,111 @@ function current_user(): array
         json_error('Invalid token.', 401);
     }
     return $user;
+}
+
+// ── Resource lookup with ownership enforcement ──────────────────────────────
+//
+// Every dashboard endpoint resolves its target through one of these. They take
+// the *public* identifier, join all the way up to users.id, and fail with an
+// identical 404 whether the row is missing or simply belongs to somebody else.
+//
+// Returning 404 rather than 403 is deliberate: a 403 would confirm that the
+// identifier exists, which is exactly the fact an attacker is fishing for.
+// The error string is the same in both cases for the same reason.
+//
+// Scoping is never left to the caller's WHERE clause — that is the mistake
+// these helpers exist to make impossible.
+
+function not_found(): never
+{
+    json_error('Not found.', 404);
+}
+
+/**
+ * Resolve a project the authenticated user owns.
+ *
+ * @return array{id:int, public_id:string, user_id:int, project_name:string, project_token:string,
+ *               website_url:?string, logo_url:?string, reply_from_email:?string, created_at:string}
+ */
+function require_project(array $user, mixed $publicId): array
+{
+    // Reject anything that isn't a UUID before touching the database. This also
+    // means a leftover client sending the old sequential integer id gets the
+    // same 404 as any other bad identifier.
+    if (!is_uuid($publicId)) {
+        not_found();
+    }
+    $stmt = db()->prepare('SELECT * FROM projects WHERE public_id = ? AND user_id = ? LIMIT 1');
+    $stmt->execute([$publicId, $user['id']]);
+    $project = $stmt->fetch();
+    if (!$project) {
+        not_found();
+    }
+    $project['id']      = (int)$project['id'];
+    $project['user_id'] = (int)$project['user_id'];
+    return $project;
+}
+
+/**
+ * Resolve a form the authenticated user owns, via its project.
+ *
+ * @return array{id:int, public_id:string, project_id:int, form_name:string, form_token:string,
+ *               is_default:int, created_at:string}
+ */
+function require_form(array $user, mixed $publicId): array
+{
+    if (!is_uuid($publicId)) {
+        not_found();
+    }
+    $stmt = db()->prepare(
+        'SELECT f.* FROM forms f
+           JOIN projects p ON p.id = f.project_id
+          WHERE f.public_id = ? AND p.user_id = ? LIMIT 1'
+    );
+    $stmt->execute([$publicId, $user['id']]);
+    $form = $stmt->fetch();
+    if (!$form) {
+        not_found();
+    }
+    $form['id']         = (int)$form['id'];
+    $form['project_id'] = (int)$form['project_id'];
+    $form['is_default'] = (int)$form['is_default'];
+    return $form;
+}
+
+/**
+ * Resolve a submission the authenticated user owns, via its project.
+ *
+ * @return array{id:int, public_id:string, project_id:int, form_id:int, is_read:int,
+ *               read_at:?string, ip_address:?string, created_at:string}
+ */
+function require_submission(array $user, mixed $publicId): array
+{
+    if (!is_uuid($publicId)) {
+        not_found();
+    }
+    $stmt = db()->prepare(
+        'SELECT s.* FROM submissions s
+           JOIN projects p ON p.id = s.project_id
+          WHERE s.public_id = ? AND p.user_id = ? LIMIT 1'
+    );
+    $stmt->execute([$publicId, $user['id']]);
+    $submission = $stmt->fetch();
+    if (!$submission) {
+        not_found();
+    }
+    $submission['id']         = (int)$submission['id'];
+    $submission['project_id'] = (int)$submission['project_id'];
+    $submission['form_id']    = (int)$submission['form_id'];
+    $submission['is_read']    = (int)$submission['is_read'];
+    return $submission;
+}
+
+/** Read a parameter from the JSON body, falling back to the query string. */
+function param(string $key, ?array $body = null): mixed
+{
+    $body ??= json_body();
+    return $body[$key] ?? $_GET[$key] ?? null;
 }
 
 function client_ip(): ?string

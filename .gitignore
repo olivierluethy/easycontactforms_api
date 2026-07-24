@@ -1,0 +1,10 @@
+# Local development overrides. Untracked so a deploy never clobbers them, and
+# so a developer's own database settings never end up in the repo.
+config/database.local.php
+
+# Composer (dev-only: PHPUnit for the test suite)
+/vendor/
+composer.lock
+
+# Build artifact, regenerated on demand
+api.zip
