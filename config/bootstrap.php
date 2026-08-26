@@ -44,7 +44,12 @@ function db(): PDO
             PDO::ATTR_EMULATE_PREPARES   => false,
         ]);
     } catch (PDOException $e) {
-        json_error('Database connection failed: ' . $e->getMessage(), 500);
+        // Never surface the raw driver message to the client: it leaks the DB
+        // username, host and database name (issue #1), which is exactly the
+        // information an attacker needs to target the server. Log the detail
+        // server-side and return a generic error to the caller.
+        error_log('Database connection failed: ' . $e->getMessage());
+        json_error('Database connection failed.', 500);
     }
     return $pdo;
 }
