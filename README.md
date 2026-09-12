@@ -1,8 +1,13 @@
 # EasyContactForm API
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 Dependency-free PHP 8 backend over MySQL/MariaDB. Every request goes through
 `index.php`, which strips the deployment subpath and dispatches to a script
 under `api/`.
+
+This is the backend. The dashboard and embeddable form widget live in
+[easycontactforms_frontend](https://github.com/olivierluethy/easycontactforms_frontend).
 
 - **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** — deploying to production and
   running the migration, step by step.
@@ -115,3 +120,12 @@ response. Nothing in the current schema needs to change to add it.
 
 Still to be designed: the rules engine, inbound-mail processing, bounce
 handling, and per-project sending limits.
+
+## License
+
+Released under the [MIT License](LICENSE) © 2026 Olivier Lüthy. You're free to use, modify and distribute this
+software, including commercially, as long as the copyright notice and license are included.
+
+## Author
+
+Built by **Olivier Lüthy** — [GitHub](https://github.com/olivierluethy).
